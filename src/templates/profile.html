@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img src="https://via.placeholder.com/70" alt="Profile Picture">
+        <div>
+            <p>{{ user.nickname }}</p>
+            <h1>{{ user.name }} ️</h1>
+        </div>
+    </div>
+    <div class="main">
+        <div class="left">
+            <div class="carousel">
+                <button class="carousel-button left" onclick="scrollCarousel(-1)">‹</button>
+                <div class="carousel-track">
+                    {% for friend in friends %}
+                    <div class="carousel-item">
+                        <img src="{{ friend }}" alt="{{ friend }}"
+                             style="width: 150px; height: 150px; border-radius: 0%;">
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-button right" onclick="scrollCarousel(1)">›</button>
+            </div>
+        </div>
+        <div class="right">
+            <div class="button" id="createRoom">Создать комнату</div>
+            <div class="button" id="joinByCode">Присоединиться к комнате</div>
+            <input type="text" class="text-input" placeholder="Text in">
+        </div>
+    </div>
+</div>
+<div id="popup" class="popup hidden">
+    <div class="popup-content">
+        <div class="popup-header">
+            <h2>Введите код</h2>
+            <button id="close-popup" class="close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.3 5.71a1 1 0 0 0-1.42 0L12 10.59 7.12 5.7a1 1 0 0 0-1.42 1.42L10.59 12l-4.88 4.88a1 1 0 0 0 1.42 1.42L12 13.41l4.88 4.88a1 1 0 0 0 1.42-1.42L13.41 12l4.88-4.88a1 1 0 0 0 0-1.41z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="popup-body">
+            <input type="text" placeholder="Код" class="input-code" id="code-input">
+            <div id="error-message" style="color: red; position: absolute; display: none;">Неверный код</div>
+        </div>
+        <button class="submit-btn" id="submit-btn">Войти</button>
+    </div>
+</div>
+
+<script>
+    const inputCode = document.getElementById("code-input");
+    const submitBtn = document.getElementById("submit-btn");
+    const errorMessage = document.getElementById("error-message");
+
+    submitBtn.onclick = function () {
+        const code = inputCode.value;
+        if (code) {
+            window.location.href = `join_room?code=${encodeURIComponent(code)}`;
+        } else {
+            errorMessage.style.display = "block";
+        }
+    };
+
+
+    let currentIndex = 0;
+
+    function scrollCarousel(direction) {
+        const track = document.querySelector('.carousel-track');
+        const items = document.querySelectorAll('.carousel-item');
+        const container = document.querySelector('.carousel');
+        const containerWidth = container.offsetWidth;
+        const itemWidth = items[0].offsetWidth + 10; // Include gap
+        const visibleCount = Math.round(containerWidth / itemWidth);
+
+        currentIndex = Math.round((currentIndex + direction + Math.ceil(items.length / visibleCount)) % Math.ceil(items.length / visibleCount));
+        console.log(currentIndex);
+        const offset = currentIndex * visibleCount * itemWidth;
+        track.style.transform = `translateX(${-offset}px)`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const popup = document.getElementById("popup");
+        const openPopupBtn = document.getElementById("joinByCode");
+        const closePopupBtn = document.getElementById("close-popup");
+
+        openPopupBtn.addEventListener("click", () => {
+            popup.classList.remove("hidden");
+        });
+
+        closePopupBtn.addEventListener("click", () => {
+            popup.classList.add("hidden");
+        });
+
+        // Закрытие окна при клике на затемнённый фон
+        popup.addEventListener("click", (e) => {
+            if (e.target === popup) {
+                popup.classList.add("hidden");
+            }
+        });
+    });
+
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Проверяем наличие параметра error в URL
+    if (getUrlParameter('error') === '1') {
+        popup.classList.remove("hidden");
+        errorMessage.style.display = "block";
+    }
+</script>
+
+</body>
+</html>

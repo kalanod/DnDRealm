@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+ {% if error %}
+        <p style="color: red;">{{ error }}</p>  <!-- Отображаем ошибку, если она есть -->
+    {% endif %}
+<form action="/login" method="POST">
+    <div>
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <br>
+    <div>
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <br>
+    <div>
+        <button type="submit">Войти</button>
+    </div>
+</form>
+<a href="/register">
+    <button>registration</button>
+</a>
+</body>
+</html>
