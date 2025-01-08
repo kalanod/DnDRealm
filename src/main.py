@@ -1,12 +1,15 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_socketio import SocketIO, emit, join_room
 
-from src.handler import AuthHandler, UserAdapter
+from src.handler.AuthHandler import AuthHandler
+from src.handler.RoomAdapter import RoomAdapter
+from src.handler.UserAdapter import UserAdapter
 from src.model.AuthData import AuthData
-from src.model.User import User
+from src.model.Room import Room
 
 app = Flask(__name__)
-
-
+app.secret_key = 'your_secret_key_here'
+socketio = SocketIO(app)
 # Route for the main page
 @app.route('/')
 def home():
@@ -17,7 +20,9 @@ def home():
 @app.route('/profile', methods=['GET'])
 def profile():
     user_id = request.args.get('id')
-    user = UserAdapter.get_user(user_id)
+    if user_id is None:
+        user_id = session.get('user_id')
+    user = userAdapter.get_user(user_id)
     friends = user.friends
     return render_template('profile.html', user=user, friends=friends)
 
@@ -32,7 +37,7 @@ def login():
         password = request.form['password']
         # Логика для проверки данных
 
-        if AuthHandler.auth(AuthData(username, password)):
+        if authHandler.auth(AuthData(username, password)):
             return redirect('/profile')  # Перенаправление на страницу приветствия
         else:
             error = 'Неверные данные. Попробуйте снова.'  # Устанавливаем ошибку
@@ -48,13 +53,25 @@ def register():
 
 
 # Route for the room page
-@app.route('/room', methods=['GET'])
-def room():
-    room_id = request.args.get('id')
+@app.route('/room_page', methods=['GET'])
+def room_page():
+    room_id = int(request.args.get('room_id'))
     if not room_id:
         return "Room ID is required", 400
-    return render_template('room.html', room_id=room_id)
+    room_data = roomAdapter.get_room(room_id)
+    if not room_data:
+        return "Room ID is invalid", 400
+    if room_data.master_id == session.get('user_id'):
+        return render_template('room_master.html', room=room_data)
+    return render_template('room_player.html', room=room_data)
 
+
+@socketio.on('update_state')
+def update_state(data):
+    room_id = session.get("room_id")
+    data = roomAdapter.updateRoom(room_id, data)
+    print(data)
+    emit('state_updated', data, room=room_id)
 
 # API endpoints for room and profile events
 @app.route('/create_room', methods=['POST'])
@@ -62,15 +79,31 @@ def create_room():
     data = request.get_json()
     return jsonify({"message": "Room created", "data": data})
 
-
 @app.route('/join_room', methods=['GET'])
-def join_room():
+def join():
     code = request.args.get('code')
-    room_id = UserAdapter.joinRoom(code)
+    room_id = userAdapter.joinRoom(code, session.get('user_id'))
+    session['room_id'] = room_id
+    print(session.get('user_id'), session.get('room_id'))
     if room_id:
-        return redirect(url_for('room', room_id=room_id))
+        return redirect(url_for('room_page', room_id=room_id))
     return redirect(url_for('profile', error=1))
 
+@socketio.on('connect')
+def handle_connect():
+    print("aidaho")
+    room_id = session.get('room_id')
+    if room_id:
+        join_room(room_id)
+        emit('joined_room', {'status': 'success', 'room_id': room_id})
+        emit('state_updated', {"current_background": roomAdapter.get_room(room_id).current_background}, room=room_id)
+        emit('state_updated', {"current_sprites": roomAdapter.get_room(room_id).current_sprites}, room=room_id)
+    else:
+        emit('error', {'status': 'failure', 'message': 'No room assigned'})
+
+@socketio.on('leave_room')
+def handle_leave():
+    leave_room(session.get('room_id'))
 
 @app.route('/leave_room', methods=['POST'])
 def leave_room():
@@ -114,4 +147,7 @@ def not_found(error):
 
 
 if __name__ == '__main__':
+    userAdapter = UserAdapter()
+    authHandler = AuthHandler(session=session)
+    roomAdapter = RoomAdapter()
     app.run(debug=True)

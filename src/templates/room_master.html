@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-group button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+
+        function updateBackground() {
+            const background = document.getElementById('background').value;
+            socket.emit('update_state', { current_background: background });
+        }
+
+        function addSprite() {
+            const sprite = document.getElementById('sprite').value;
+            socket.emit('update_state', { new_sprite: sprite });
+        }
+    </script>
+</head>
+<body>
+    <h1>Room Management</h1>
+
+    <div class="form-group">
+        <label for="background">Background URL:</label>
+        <input type="text" id="background" placeholder="Enter background URL">
+        <button onclick="updateBackground()">Update Background</button>
+    </div>
+
+    <div class="form-group">
+        <label for="sprite">Add Sprite URL:</label>
+        <input type="text" id="sprite" placeholder="Enter sprite URL">
+        <button onclick="addSprite()">Add Sprite</button>
+    </div>
+</body>
+</html>

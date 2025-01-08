@@ -1,10 +1,17 @@
+from src.handler.DBAdapter import DBAdapter
 from src.model import AuthData, RegData
 
 
-def auth(auth_data: AuthData):
-    if auth_data.username == "1@1.1" and auth_data.password == "1":
-        return True
-    return False
+class AuthHandler:
+    def __init__(self, session):
+        self.session = session
+        self.dbAdapter = DBAdapter()
+    def auth(self, auth_data: AuthData):
+        user_id = self.dbAdapter.check_auth(auth_data.username, auth_data.password)
+        if user_id:
+            self.session['user_id'] = user_id
+            return True
+        return False
 
-def register(reg_data: RegData):
-    return True
+    def register(self, reg_data: RegData):
+        return True
