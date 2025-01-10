@@ -1,5 +1,8 @@
+import os
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_socketio import SocketIO, emit, join_room
+from werkzeug.utils import secure_filename
 
 from src.handler.AuthHandler import AuthHandler
 from src.handler.RoomAdapter import RoomAdapter
@@ -10,6 +13,50 @@ from src.model.Room import Room
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 socketio = SocketIO(app)
+
+UPLOAD_FOLDER = 'src/static/sprites/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Разрешенные расширения файлов
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Убедимся, что папка существует
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    """Проверка, разрешено ли расширение файла"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/upload_sprite', methods=['POST'])
+def upload_sprite():
+    """Обработчик загрузки нового спрайта"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Файл не найден'}), 400
+
+    file = request.files['file']
+    character_id = request.form.get('character_id')
+
+    if not character_id:
+        return jsonify({'success': False, 'message': 'Не указан ID персонажа'}), 400
+
+    if file and allowed_file(file.filename):
+        # Сохраняем файл с безопасным именем
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        # Формируем URL для клиента
+        file_url = f'/static/sprites/{filename}'
+
+        roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
+
+
+        return jsonify({'success': True, 'message': 'Спрайт успешно загружен', 'url': file_url}), 200
+    else:
+        return jsonify({'success': False, 'message': 'Неподдерживаемый формат файла'}), 400
+
+
 # Route for the main page
 @app.route('/')
 def home():
@@ -66,6 +113,14 @@ def room_page():
     return render_template('room_player.html', room=room_data)
 
 
+@socketio.on("new_character")
+def new_character():
+    room_id = session.get('room_id')
+    roomAdapter.addCharacter(room_id)
+    characters_dict = roomAdapter.get_characters(room_id)
+    emit('characters_update', characters_dict, room=room_id)
+
+
 @socketio.on('update_state')
 def update_state(data):
     room_id = session.get("room_id")
@@ -73,11 +128,13 @@ def update_state(data):
     print(data)
     emit('state_updated', data, room=room_id)
 
+
 # API endpoints for room and profile events
 @app.route('/create_room', methods=['POST'])
 def create_room():
     data = request.get_json()
     return jsonify({"message": "Room created", "data": data})
+
 
 @app.route('/join_room', methods=['GET'])
 def join():
@@ -89,6 +146,7 @@ def join():
         return redirect(url_for('room_page', room_id=room_id))
     return redirect(url_for('profile', error=1))
 
+
 @socketio.on('connect')
 def handle_connect():
     print("aidaho")
@@ -98,12 +156,28 @@ def handle_connect():
         emit('joined_room', {'status': 'success', 'room_id': room_id})
         emit('state_updated', {"current_background": roomAdapter.get_room(room_id).current_background}, room=room_id)
         emit('state_updated', {"current_sprites": roomAdapter.get_room(room_id).current_sprites}, room=room_id)
+        characters_dict = roomAdapter.get_characters(room_id)
+        emit('characters_update', characters_dict, room=room_id)
     else:
         emit('error', {'status': 'failure', 'message': 'No room assigned'})
+
 
 @socketio.on('leave_room')
 def handle_leave():
     leave_room(session.get('room_id'))
+
+
+@socketio.on("character_delete")
+def character_delete(data):
+    room_id = session.get('room_id')
+    roomAdapter.delete_character(room_id, data['characterId'])
+    emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
+
+@socketio.on("character_update")
+def character_update(data):
+    room_id = session.get('room_id')
+    roomAdapter.updateCharacter(room_id, data['characterId'], data['name'])
+    emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
 
 @app.route('/leave_room', methods=['POST'])
 def leave_room():

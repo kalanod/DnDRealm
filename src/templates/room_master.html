@@ -3,65 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Management</title>
+    <title>Sprite Manager</title>
     <style>
         body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             font-family: Arial, sans-serif;
-            margin: 20px;
         }
-        .form-group {
-            margin-bottom: 15px;
+
+        /* Хэдер */
+        #header {
+            height: 10%;
+            background-color: #4CAF50; /* Зеленый */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
+
+        /* Контейнер основного контента */
+        #content {
+            flex: 1;
+            display: flex;
         }
-        .form-group input, .form-group textarea, .form-group select {
+
+        /* Левая часть */
+        #left {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #left .block {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        #left .block:nth-child(1) {
+            background-color: #FF5733; /* Красный */
+        }
+
+        #left .block:nth-child(2) {
+            background-color: #FFC733; /* Желтый */
+        }
+
+        /* Правая часть */
+        #right {
+            width: 50%;
+            display: flex;
+        }
+
+        #right .block {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        #right .block:nth-child(1) {
+            background-color: #FAD4D4; /* Розовый */
+        }
+
+        #right .block:nth-child(2) {
+            background-color: #6A5ACD; /* Синий */
+        }
+
+        /* Стили для игрового экрана */
+        #game-container {
+            position: relative;
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center; /* Центрирование по горизонтали */
+            align-items: center; /* Центрирование по вертикали */
         }
-        .form-group button {
-            padding: 10px 15px;
-            background-color: #007bff;
+
+        .sprite {
+            background-size: contain;
+            background-repeat: no-repeat;
+            margin: 0 5px; /* Промежуток между спрайтами */
+        }
+
+        #block-3 {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        #add-character-button {
+            margin-bottom: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
         }
-        .form-group button:hover {
-            background-color: #0056b3;
+
+        #characters-list {
+            width: 100%;
+            max-height: 600px; /* Фиксируем высоту контейнера */
+            overflow-y: auto; /* Добавляем вертикальный скролл при необходимости */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
+
+        .character-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .character-item:hover {
+            background-color: #e0e0e0;
+        }
+
+        .character-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            margin-right: 15px;
+        }
+
+        .character-name {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            width: 60%;
+            max-height: 80%;
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .sprites-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+
+        .sprite-card {
+            width: 100%;
+            padding-top: 100%;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sprite-card.add-sprite {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #666;
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+
     </style>
-    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
-    <script>
-        const socket = io();
-
-        function updateBackground() {
-            const background = document.getElementById('background').value;
-            socket.emit('update_state', { current_background: background });
-        }
-
-        function addSprite() {
-            const sprite = document.getElementById('sprite').value;
-            socket.emit('update_state', { new_sprite: sprite });
-        }
-    </script>
 </head>
 <body>
-    <h1>Room Management</h1>
+<!-- Хэдер -->
+<div id="header">Header</div>
 
-    <div class="form-group">
-        <label for="background">Background URL:</label>
-        <input type="text" id="background" placeholder="Enter background URL">
-        <button onclick="updateBackground()">Update Background</button>
+<!-- Основной контент -->
+<div id="content">
+    <!-- Левая часть -->
+    <div id="left">
+        <!-- Блок 1 с игровым экраном -->
+        <div class="block" id="game-block">
+            <div id="game-container"></div>
+        </div>
+        <!-- Блок 2 -->
+        <div class="block">2</div>
     </div>
 
-    <div class="form-group">
-        <label for="sprite">Add Sprite URL:</label>
-        <input type="text" id="sprite" placeholder="Enter sprite URL">
-        <button onclick="addSprite()">Add Sprite</button>
+    <!-- Правая часть -->
+    <div id="right">
+        <div class="block" id="block-3">
+            <button id="add-character-button">Добавить</button>
+            <div id="characters-list"></div>
+        </div>
+        <div class="block">4</div>
     </div>
+</div>
+<script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+<script>
+    const socket = io();
+    const gameContainer = document.getElementById('game-container');
+
+    function onButtonClick() {
+        const message = {name: name}; // Формируем объект сообщения
+        socket.emit('new_character');
+    }
+
+    document.getElementById('add-character-button').addEventListener('click', onButtonClick);
+    socket.on('state_updated', (data) => {
+        if (data.current_background) {
+            gameContainer.style.backgroundImage = `url(${data.current_background})`;
+        }
+
+        if (data.current_sprites) {
+            gameContainer.innerHTML = ''; // Очищаем контейнер
+
+            // Создаем спрайты
+            const spritePromises = data.current_sprites.map(sprite => {
+                return new Promise((resolve) => {
+                    const spriteElement = document.createElement('div');
+                    spriteElement.className = 'sprite';
+
+                    // Устанавливаем изображение и уменьшенные размеры
+                    spriteElement.style.backgroundImage = `url(${sprite.url})`;
+                    spriteElement.style.height = `${sprite.height / 2}px`;
+
+                    // Ждем загрузки изображения для вычисления ширины
+                    const img = new Image();
+                    img.src = sprite.url;
+                    img.onload = () => {
+                        const aspectRatio = img.width / img.height;
+                        spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
+                        resolve(spriteElement); // Возвращаем созданный спрайт
+                    };
+                    spriteElement.addEventListener('click', () => {
+
+                    })
+                });
+            });
+
+            // Добавляем спрайты в контейнер после загрузки всех изображений
+            Promise.all(spritePromises).then(sprites => {
+                sprites.forEach(sprite => gameContainer.appendChild(sprite));
+            });
+        }
+    });
+    const charactersList = document.getElementById('characters-list');
+
+    // Обновление списка персонажей
+    socket.on('characters_update', (data) => {
+        charactersList.innerHTML = ''; // Очищаем список
+
+        data.forEach(character => {
+            const characterItem = document.createElement('div');
+            characterItem.className = 'character-item';
+
+            // Добавляем круглое изображение
+            const characterImage = document.createElement('div');
+            characterImage.className = 'character-image';
+            const basePath = '/static/images/'; // Путь к папке изображений
+            characterImage.style.backgroundImage = `url(${basePath}${character.picture})`;
+
+            // Добавляем имя
+            const characterName = document.createElement('div');
+            characterName.className = 'character-name';
+            characterName.textContent = character.name;
+
+            characterItem.addEventListener('click', () => {
+                console.log(character)
+                createModal(character); // Передаем объект character в функцию
+                // Логика обработки клика
+            });
+
+            // Собираем элемент
+            characterItem.appendChild(characterImage);
+            characterItem.appendChild(characterName);
+            charactersList.appendChild(characterItem);
+        });
+    });
+
+    function createModal(character) {
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+
+        // Контейнер содержимого
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+
+        // Поле ввода имени персонажа
+        const nameInput = document.createElement('input');
+        nameInput.className = 'name-input';
+        nameInput.type = 'text';
+        nameInput.value = character.name;
+
+        // Кнопка удаления персонажа
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.textContent = 'Удалить';
+
+        // Контейнер для спрайтов
+        const spritesContainer = document.createElement('div');
+        spritesContainer.className = 'sprites-container';
+
+        // Заполняем карточки спрайтов
+        function renderSprites() {
+            spritesContainer.innerHTML = ''; // Очищаем контейнер
+            character.sprites.forEach((spriteUrl) => {
+                const spriteCard = document.createElement('div');
+                spriteCard.className = 'sprite-card';
+                spriteCard.style.backgroundImage = `url(${spriteUrl})`;
+                spriteCard.addEventListener('click', () => {
+                    socket.emit('update_state', {"new_sprite": spriteUrl});
+                })
+                spritesContainer.appendChild(spriteCard);
+            });
+
+            // Карточка с плюсом для добавления
+            const addSpriteCard = document.createElement('div');
+            addSpriteCard.className = 'sprite-card add-sprite';
+            addSpriteCard.textContent = '+';
+            addSpriteCard.addEventListener('click', () => {
+                // Открытие окна выбора изображения
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.addEventListener('change', () => {
+                    const file = input.files[0];
+                    if (file) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('character_id', character.id);
+
+                        // Отправляем файл на сервер
+                        fetch('/upload_sprite', {
+                            method: 'POST',
+                            body: formData,
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    character.sprites.push(data.url); // Добавляем URL нового спрайта
+                                    renderSprites(); // Перерисовываем спрайты
+                                } else {
+                                    console.error('Ошибка загрузки спрайта:', data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Ошибка при загрузке файла:', error);
+                            });
+                    }
+                });
+                input.click();
+            });
+
+            spritesContainer.appendChild(addSpriteCard);
+        }
+
+
+        renderSprites();
+
+        // Событие удаления персонажа
+        deleteButton.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите удалить персонажа?')) {
+                socket.emit('character_delete', {characterId: character.id}); // Отправляем запрос на сервер
+                document.body.removeChild(modal); // Закрываем модальное окно
+            }
+        });
+
+        // Событие изменения имени
+        nameInput.addEventListener('input', () => {
+            character.name = nameInput.value;
+            socket.emit('character_update', {characterId: character.id, name: character.name}); // Отправляем изменения на сервер
+        });
+
+        // Добавляем элементы в модальное окно
+        modalContent.appendChild(nameInput);
+        modalContent.appendChild(deleteButton);
+        modalContent.appendChild(spritesContainer);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Закрытие окна при клике вне модального содержимого
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    }
+
+
+    socket.emit('join_room', {room_id: 'room1'});
+</script>
 </body>
 </html>

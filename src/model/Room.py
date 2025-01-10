@@ -11,13 +11,4 @@ class Room:
         self.users = []
         self.current_background = current_background
         self.current_sprites = current_sprites
-
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "room_id": self.room_id,
-            "master_id": self.master_id,
-            "current_background": self.current_background,
-            "current_sprites": self.current_sprites,
-            "users": self.users
-        }
+        self.characters = dict()
