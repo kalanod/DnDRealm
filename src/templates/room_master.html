@@ -3,261 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/css/room_master.css"/>
     <title>Sprite Manager</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            font-family: Arial, sans-serif;
-        }
-
-        /* Хэдер */
-        #header {
-            height: 10%;
-            background-color: #4CAF50; /* Зеленый */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-        }
-
-        /* Контейнер основного контента */
-        #content {
-            flex: 1;
-            display: flex;
-        }
-
-        /* Левая часть */
-        #left {
-            width: 50%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #left .block {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-        }
-
-        #left .block:nth-child(1) {
-            background-color: #FF5733; /* Красный */
-        }
-
-        #left .block:nth-child(2) {
-            background-color: #FFC733; /* Желтый */
-        }
-
-        /* Правая часть */
-        #right {
-            width: 50%;
-            display: flex;
-        }
-
-        #right .block {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-        }
-
-        #right .block:nth-child(1) {
-            background-color: #FAD4D4; /* Розовый */
-        }
-
-        #right .block:nth-child(2) {
-            background-color: #6A5ACD; /* Синий */
-        }
-
-        /* Стили для игрового экрана */
-        #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            justify-content: center; /* Центрирование по горизонтали */
-            align-items: center; /* Центрирование по вертикали */
-        }
-
-
-        #block-3 {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        #add-character-button {
-            margin-bottom: 10px;
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #characters-list {
-            width: 100%;
-            max-height: 600px; /* Фиксируем высоту контейнера */
-            overflow-y: auto; /* Добавляем вертикальный скролл при необходимости */
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .character-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: #f4f4f4;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .character-item:hover {
-            background-color: #e0e0e0;
-        }
-
-        .character-image {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            margin-right: 15px;
-        }
-
-        .character-name {
-            font-size: 18px;
-            color: #333;
-        }
-
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            width: 60%;
-            max-height: 80%;
-            background: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            overflow: hidden;
-        }
-
-        .name-input {
-            width: 100%;
-            padding: 8px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .delete-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        .sprites-container {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f9f9f9;
-        }
-
-        .sprite-card {
-            width: 100%;
-            padding-top: 100%;
-            background-size: cover;
-            background-position: center;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .sprite-card.add-sprite {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #666;
-            background: #e0e0e0;
-            cursor: pointer;
-        }
-
-        .sprite {
-            opacity: 0;
-            transition: opacity 1.0s ease, transform 1.0s ease;
-            background-size: contain;
-            background-repeat: no-repeat;
-            margin: 0 5px; /* Промежуток между спрайтами */
-        }
-
-        .sprite.show {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .sprite.fade-out {
-            opacity: 0;
-        }
-    </style>
 </head>
 <body>
-<!-- Хэдер -->
 <div id="header">Header</div>
 
-<!-- Основной контент -->
 <div id="content">
-    <!-- Левая часть -->
     <div id="left">
-        <!-- Блок 1 с игровым экраном -->
         <div class="block" id="game-block">
             <div id="game-container"></div>
         </div>
-        <!-- Блок 2 -->
         <div class="block">2</div>
     </div>
 
@@ -267,101 +23,98 @@
             <button id="add-character-button">Добавить</button>
             <div id="characters-list"></div>
         </div>
-        <div class="block">4</div>
+        <div class="block" id="block-4">
+            <button id="add-background-button">Добавить</button>
+            <div id="backgrounds-list"></div>
+        </div>
     </div>
 </div>
 <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 <script>
     const socket = io();
     const gameContainer = document.getElementById('game-container');
-    var characters;
-
-    function onButtonClick() {
-        const message = {name: name}; // Формируем объект сообщения
-        socket.emit('new_character');
-    }
-
-    document.getElementById('add-character-button').addEventListener('click', onButtonClick);
-
+    let characters;
+    let backgrounds;
 
     socket.on('state_updated', (data) => {
-        if (data.current_background) {
-            gameContainer.style.backgroundImage = `url(${data.current_background})`;
-        }
-        const centerSprites = () => {
-            const totalWidth = Array.from(gameContainer.children)
-                .reduce((sum, sprite) => sum + sprite.offsetWidth, 0);
-
-            const containerWidth = gameContainer.width;
-            const offset = Math.max(0, (containerWidth - totalWidth) / 2);
-
-            gameContainer.style.paddingLeft = `${offset}px`;
-        };
-        if (data.current_sprites) {
-            gameContainer.innerHTML = ''; // Очищаем контейнер
-
-            const spritePromises = Object.values(data.current_sprites).map(sprite => {
-                return new Promise((resolve) => {
-                    const spriteElement = document.createElement('div');
-                    spriteElement.className = 'sprite';
-
-                    // Устанавливаем изображение и уменьшенные размеры
-                    spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
-                    spriteElement.style.height = `${sprite.height / 2}px`;
-                    const img = new Image();
-                    img.src = sprite.sprite_url;
-                    img.onload = () => {
-                        const aspectRatio = img.width / img.height;
-                        spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
-
-                        // Добавляем обработчики событий
-                        spriteElement.addEventListener('click', () => {
-                            createModalEdit(sprite.character_id);
-                        });
-                        spriteElement.addEventListener('contextmenu', (event) => {
-                            event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
-                            socket.emit('delete_current', {
-                                "character_id": sprite.character_id
-                            });
-
-                        });
-                        socket.on("delete_current_ans", (data) => {
-                            if (sprite.character_id === data.character_id) {
-                                spriteElement.classList.add('fade-out');
-                                spriteElement.addEventListener('transitionend', () => {
-                                    gameContainer.removeChild(spriteElement)
-                                    centerSprites();
-                                }, {once: true}); // Обработчик срабатывает только один раз
-
-                            }
-                        });
-
-                        resolve(spriteElement); // Возвращаем созданный спрайт
-                    };
-                });
-            });
-            if (data.new_character) {
-                Promise.all(spritePromises).then(sprites => {
-                    sprites.forEach(sprite => {
-                        gameContainer.appendChild(sprite);
-                        requestAnimationFrame(() => {
-                            sprite.classList.add('show');
-                        });
-                    });
-                });
+            if (data.current_background) {
+                gameContainer.style.backgroundImage = `url(${data.current_background.sprite_url})`;
             } else {
-                Promise.all(spritePromises).then(sprites => {
-                    sprites.forEach(sprite => {
-                        gameContainer.appendChild(sprite)
-                        sprite.classList.add('show');
+                const centerSprites = () => {
+                    const totalWidth = Array.from(gameContainer.children)
+                        .reduce((sum, sprite) => sum + sprite.offsetWidth, 0);
+
+                    const containerWidth = gameContainer.width;
+                    const offset = Math.max(0, (containerWidth - totalWidth) / 2);
+
+                    gameContainer.style.paddingLeft = `${offset}px`;
+                };
+                if (data.current_sprites) {
+                    gameContainer.innerHTML = ''; // Очищаем контейнер
+
+                    const spritePromises = Object.values(data.current_sprites).map(sprite => {
+                        return new Promise((resolve) => {
+                            const spriteElement = document.createElement('div');
+                            spriteElement.className = 'sprite';
+
+                            // Устанавливаем изображение и уменьшенные размеры
+                            spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
+                            spriteElement.style.height = `${sprite.height / 2}px`;
+                            const img = new Image();
+                            img.src = sprite.sprite_url;
+                            img.onload = () => {
+                                const aspectRatio = img.width / img.height;
+                                spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
+
+                                // Добавляем обработчики событий
+                                spriteElement.addEventListener('click', () => {
+                                    createModalEdit(sprite.character_id);
+                                });
+                                spriteElement.addEventListener('contextmenu', (event) => {
+                                    event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
+                                    socket.emit('delete_current', {
+                                        "character_id": sprite.character_id
+                                    });
+
+                                });
+                                socket.on("delete_current_ans", (data) => {
+                                    if (sprite.character_id === data.character_id) {
+                                        spriteElement.classList.add('fade-out');
+                                        spriteElement.addEventListener('transitionend', () => {
+                                            gameContainer.removeChild(spriteElement)
+                                            centerSprites();
+                                        }, {once: true}); // Обработчик срабатывает только один раз
+
+                                    }
+                                });
+
+                                resolve(spriteElement); // Возвращаем созданный спрайт
+                            };
+                        });
                     });
-                });
+                    if (data.new_character) {
+                        Promise.all(spritePromises).then(sprites => {
+                            sprites.forEach(sprite => {
+                                gameContainer.appendChild(sprite);
+                                requestAnimationFrame(() => {
+                                    sprite.classList.add('show');
+                                });
+                            });
+                        });
+                    } else {
+                        Promise.all(spritePromises).then(sprites => {
+                            sprites.forEach(sprite => {
+                                gameContainer.appendChild(sprite)
+                                sprite.classList.add('show');
+                            });
+                        });
+                    }
+                }
             }
         }
-    });
+    );
 
     const charactersList = document.getElementById('characters-list');
-
     socket.on('characters_update', (data) => {
         charactersList.innerHTML = ''; // Очищаем список
         characters = data
@@ -378,8 +131,7 @@
             characterName.textContent = character.name;
 
             characterItem.addEventListener('click', () => {
-                console.log(character)
-                createModal(character);
+                createModal(character, 0);
             });
 
             characterItem.appendChild(characterImage);
@@ -387,7 +139,38 @@
             charactersList.appendChild(characterItem);
         });
     });
+    document.getElementById('add-character-button').addEventListener('click', () => {
+        socket.emit('new_character');
+    });
 
+    const backgroundList = document.getElementById('backgrounds-list');
+    socket.on('backgrounds_update', (data) => {
+        backgroundList.innerHTML = ''; // Очищаем список
+        backgrounds = data
+        Object.values(data).forEach(background => {
+            const backgroundItem = document.createElement('div');
+            backgroundItem.className = 'background-item';
+
+            const backgroundImage = document.createElement('div');
+            backgroundImage.className = 'background-image';
+            backgroundImage.style.backgroundImage = `url(${background.picture})`;
+
+            const backgroundName = document.createElement('div');
+            backgroundName.className = 'background-name';
+            backgroundName.textContent = background.name;
+
+            backgroundItem.addEventListener('click', () => {
+                createModal(background, 1);
+            });
+
+            backgroundItem.appendChild(backgroundImage);
+            backgroundItem.appendChild(backgroundName);
+            backgroundList.appendChild(backgroundItem);
+        });
+    });
+    document.getElementById('add-background-button').addEventListener('click', () => {
+        socket.emit('new_background');
+    });
 
     function createModalEdit(sprite) {
         const character = characters[sprite]
@@ -434,7 +217,7 @@
     }
 
 
-    function createModal(character) {
+    function createModal(character, isBackground) {
         // Создаем модальное окно
         const modal = document.createElement('div');
         modal.className = 'modal';
@@ -466,16 +249,26 @@
                 spriteCard.className = 'sprite-card';
                 spriteCard.style.backgroundImage = `url(${sprite.sprite_url})`;
                 spriteCard.addEventListener('click', () => {
-                    socket.emit('update_state', {
-                        "new_sprite": {
-                            "sprite_url": sprite.sprite_url,
-                            "character_id": sprite.character_id,
-                            "sprite_id": sprite.sprite_id
-                        }
-                    });
+                    if (!isBackground) {
+                        socket.emit('update_state', {
+                            "new_sprite": {
+                                "sprite_url": sprite.sprite_url,
+                                "character_id": sprite.character_id,
+                                "sprite_id": sprite.sprite_id
+                            }
+                        });
+                    } else {
+                        socket.emit('update_state', {
+                            "current_background": {
+                                "sprite_url": sprite.sprite_url,
+                                "character_id": sprite.character_id,
+                                "sprite_id": sprite.sprite_id
+                            }
+                        });
+                    }
                 })
                 spriteCard.addEventListener('contextmenu', (event) => {
-                    event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
+                    event.preventDefault();
                     socket.emit('delete_sprite', {
                         "sprite_url": sprite.sprite_url,
                         "character_id": sprite.character_id,
@@ -569,8 +362,7 @@
         });
     }
 
-
-    socket.emit('join_room', {room_id: 'room1'});
+    socket.emit('join_room', {room_id: '1'});
 </script>
 </body>
 </html>

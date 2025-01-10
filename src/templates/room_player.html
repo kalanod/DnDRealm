@@ -46,70 +46,74 @@
 <script>
     const socket = io();
     const gameContainer = document.getElementById('game-container');
+    let characters;
+    let backgrounds;
 
     socket.on('state_updated', (data) => {
-        if (data.current_background) {
-            gameContainer.style.backgroundImage = `url(${data.current_background})`;
-        }
-        const centerSprites = () => {
-
-            const totalWidth = Array.from(gameContainer.children)
-                .reduce((sum, sprite) => sum + sprite.offsetWidth, 0);
-            console.log(gameContainer.offsetWidth)
-            const containerWidth = gameContainer.width;
-            const offset = Math.max(0, (containerWidth - totalWidth) / 2);
-
-            gameContainer.style.paddingLeft = `${offset}px`;
-        };
-        if (data.current_sprites) {
-            gameContainer.innerHTML = ''; // Очищаем контейнер
-
-            const spritePromises = Object.values(data.current_sprites).map(sprite => {
-                return new Promise((resolve) => {
-                    const spriteElement = document.createElement('div');
-                    spriteElement.className = 'sprite';
-
-                    // Устанавливаем изображение и уменьшенные размеры
-                    spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
-                    spriteElement.style.height = `${sprite.height / 2}px`;
-                    const img = new Image();
-                    img.src = sprite.sprite_url;
-                    img.onload = () => {
-                        const aspectRatio = img.width / img.height;
-                        spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
-                        socket.on("delete_current_ans", (data) => {
-                            if (sprite.character_id === data.character_id) {
-                                spriteElement.classList.add('fade-out');
-                                spriteElement.addEventListener('transitionend', () => {
-                                    gameContainer.removeChild(spriteElement)
-                                    centerSprites();
-                                }, {once: true}); // Обработчик срабатывает только один раз
-
-                            }
-                        });
-                        resolve(spriteElement); // Возвращаем созданный спрайт
-                    };
-                });
-            });
-            if (data.new_character) {
-                Promise.all(spritePromises).then(sprites => {
-                    sprites.forEach(sprite => {
-                        gameContainer.appendChild(sprite);
-                        requestAnimationFrame(() => {
-                            sprite.classList.add('show');
-                        });
-                    });
-                });
+         if (data.current_background) {
+                gameContainer.style.backgroundImage = `url(${data.current_background.sprite_url})`;
             } else {
-                Promise.all(spritePromises).then(sprites => {
-                    sprites.forEach(sprite => {
-                        gameContainer.appendChild(sprite)
-                        sprite.classList.add('show');
+                const centerSprites = () => {
+                    const totalWidth = Array.from(gameContainer.children)
+                        .reduce((sum, sprite) => sum + sprite.offsetWidth, 0);
+
+                    const containerWidth = gameContainer.width;
+                    const offset = Math.max(0, (containerWidth - totalWidth) / 2);
+
+                    gameContainer.style.paddingLeft = `${offset}px`;
+                };
+                if (data.current_sprites) {
+                    gameContainer.innerHTML = ''; // Очищаем контейнер
+
+                    const spritePromises = Object.values(data.current_sprites).map(sprite => {
+                        return new Promise((resolve) => {
+                            const spriteElement = document.createElement('div');
+                            spriteElement.className = 'sprite';
+
+                            // Устанавливаем изображение и уменьшенные размеры
+                            spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
+                            spriteElement.style.height = `${sprite.height}px`;
+                            const img = new Image();
+                            img.src = sprite.sprite_url;
+                            img.onload = () => {
+                                const aspectRatio = img.width / img.height;
+                                spriteElement.style.width = `${(sprite.height) * aspectRatio}px`;
+
+                                socket.on("delete_current_ans", (data) => {
+                                    if (sprite.character_id === data.character_id) {
+                                        spriteElement.classList.add('fade-out');
+                                        spriteElement.addEventListener('transitionend', () => {
+                                            gameContainer.removeChild(spriteElement)
+                                            centerSprites();
+                                        }, {once: true}); // Обработчик срабатывает только один раз
+
+                                    }
+                                });
+                                resolve(spriteElement); // Возвращаем созданный спрайт
+                            };
+                        });
                     });
-                });
+                    if (data.new_character) {
+                        Promise.all(spritePromises).then(sprites => {
+                            sprites.forEach(sprite => {
+                                gameContainer.appendChild(sprite);
+                                requestAnimationFrame(() => {
+                                    sprite.classList.add('show');
+                                });
+                            });
+                        });
+                    } else {
+                        Promise.all(spritePromises).then(sprites => {
+                            sprites.forEach(sprite => {
+                                gameContainer.appendChild(sprite)
+                                sprite.classList.add('show');
+                            });
+                        });
+                    }
+                }
             }
         }
-    });
+    );
 
     socket.emit('join_room', {room_id: 'room1'});
 </script>

@@ -120,12 +120,17 @@ def room_page():
 def new_character():
     room_id = session.get('room_id')
     roomAdapter.addCharacter(room_id)
-    characters_dict = roomAdapter.get_characters(room_id)
-    emit('characters_update', characters_dict, room=room_id)
+    emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
 
+@socketio.on("new_background")
+def new_background():
+    room_id = session.get('room_id')
+    roomAdapter.addBackground(room_id)
+    emit('backgrounds_update', roomAdapter.get_backgrounds(room_id), room=room_id)
 
 @socketio.on('update_state')
 def update_state(data):
+    print(data)
     room_id = session.get("room_id")
     data = roomAdapter.updateRoom(room_id, data)
     emit('state_updated', data, room=room_id)
@@ -143,7 +148,6 @@ def join():
     code = request.args.get('code')
     room_id = userAdapter.joinRoom(code, session.get('user_id'))
     session['room_id'] = room_id
-    print(session.get('user_id'), session.get('room_id'))
     if room_id:
         return redirect(url_for('room_page', room_id=room_id))
     return redirect(url_for('profile', error=1))
@@ -151,15 +155,14 @@ def join():
 
 @socketio.on('connect')
 def handle_connect():
-    print("aidaho")
     room_id = session.get('room_id')
     if room_id:
         join_room(room_id)
         emit('joined_room', {'status': 'success', 'room_id': room_id})
         emit('state_updated', {"current_background": roomAdapter.get_room(room_id).current_background}, room=room_id)
         emit('state_updated', roomAdapter.get_current(room_id), room=room_id)
-        characters_dict = roomAdapter.get_characters(room_id)
-        emit('characters_update', characters_dict, room=room_id)
+        emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
+        emit('backgrounds_update', roomAdapter.get_backgrounds(room_id), room=room_id)
     else:
         emit('error', {'status': 'failure', 'message': 'No room assigned'})
 
@@ -187,6 +190,7 @@ def character_update(data):
     room_id = session.get('room_id')
     roomAdapter.updateCharacter(room_id, data['characterId'], data['name'])
     emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
+    emit('backgrounds_update', roomAdapter.get_backgrounds(room_id), room=room_id)
 
 
 @app.route('/leave_room', methods=['POST'])
@@ -234,4 +238,4 @@ if __name__ == '__main__':
     userAdapter = UserAdapter()
     authHandler = AuthHandler(session=session)
     roomAdapter = RoomAdapter()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=80, debug=False)
