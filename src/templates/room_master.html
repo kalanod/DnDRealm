@@ -279,18 +279,19 @@
             gameContainer.innerHTML = ''; // Очищаем контейнер
 
             // Создаем спрайты
-            const spritePromises = data.current_sprites.map(sprite => {
+
+            const spritePromises = Object.values(data.current_sprites).map(sprite => {
                 return new Promise((resolve) => {
                     const spriteElement = document.createElement('div');
                     spriteElement.className = 'sprite';
 
                     // Устанавливаем изображение и уменьшенные размеры
-                    spriteElement.style.backgroundImage = `url(${sprite.url})`;
+                    spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
                     spriteElement.style.height = `${sprite.height / 2}px`;
 
                     // Ждем загрузки изображения для вычисления ширины
                     const img = new Image();
-                    img.src = sprite.url;
+                    img.src = sprite.sprite_url;
                     img.onload = () => {
                         const aspectRatio = img.width / img.height;
                         spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
@@ -321,8 +322,7 @@
             // Добавляем круглое изображение
             const characterImage = document.createElement('div');
             characterImage.className = 'character-image';
-            const basePath = '/static/images/'; // Путь к папке изображений
-            characterImage.style.backgroundImage = `url(${basePath}${character.picture})`;
+            characterImage.style.backgroundImage = `url(${character.picture})`;
 
             // Добавляем имя
             const characterName = document.createElement('div');
@@ -369,13 +369,29 @@
         // Заполняем карточки спрайтов
         function renderSprites() {
             spritesContainer.innerHTML = ''; // Очищаем контейнер
-            character.sprites.forEach((spriteUrl) => {
+            Object.values(character.sprites).forEach(sprite => {
                 const spriteCard = document.createElement('div');
                 spriteCard.className = 'sprite-card';
-                spriteCard.style.backgroundImage = `url(${spriteUrl})`;
+                spriteCard.style.backgroundImage = `url(${sprite.sprite_url})`;
                 spriteCard.addEventListener('click', () => {
-                    socket.emit('update_state', {"new_sprite": spriteUrl});
+                    socket.emit('update_state', {
+                        "new_sprite": {
+                            "sprite_url": sprite.sprite_url,
+                            "character_id": sprite.character_id,
+                            "sprite_id": sprite.sprite_id
+                        }
+                    });
                 })
+                spriteCard.addEventListener('contextmenu', (event) => {
+                    event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
+                    socket.emit('delete_sprite', {
+                            "sprite_url": sprite.sprite_url,
+                            "character_id": sprite.character_id,
+                            "sprite_id": sprite.sprite_id
+
+                    });
+                    spritesContainer.removeChild(spriteCard);
+                });
                 spritesContainer.appendChild(spriteCard);
             });
 
@@ -403,7 +419,16 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    character.sprites.push(data.url); // Добавляем URL нового спрайта
+                                    const newSpriteData = {
+                                        sprite_url: data.sprite_url,
+                                        sprite_id: data.sprite_id,
+                                        character_id: data.character_id,
+                                    };
+                                    if (!character.sprites[data.character_id]) {
+                                        character.sprites[data.character_id] = {};
+                                    }
+                                    character.sprites[data.character_id] = newSpriteData;
+
                                     renderSprites(); // Перерисовываем спрайты
                                 } else {
                                     console.error('Ошибка загрузки спрайта:', data.message);

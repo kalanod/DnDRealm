@@ -2,8 +2,8 @@ class Character:
     def __init__(self, id, name):
         self.id = id
         self.name = name
-        self.picture = "new_character.png"
-        self.sprites = []
+        self.picture = "static/sprites/new_character.png"
+        self.sprites = dict()
 
     def to_dict(self):
         return {

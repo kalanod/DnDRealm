@@ -10,5 +10,5 @@ class Room:
         self.name = name
         self.users = []
         self.current_background = current_background
-        self.current_sprites = current_sprites
+        self.current_sprites = dict()
         self.characters = dict()

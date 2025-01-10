@@ -8,7 +8,6 @@ from src.handler.AuthHandler import AuthHandler
 from src.handler.RoomAdapter import RoomAdapter
 from src.handler.UserAdapter import UserAdapter
 from src.model.AuthData import AuthData
-from src.model.Room import Room
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -30,10 +29,8 @@ def allowed_file(filename):
 
 @app.route('/upload_sprite', methods=['POST'])
 def upload_sprite():
-    """Обработчик загрузки нового спрайта"""
     if 'file' not in request.files:
         return jsonify({'success': False, 'message': 'Файл не найден'}), 400
-
     file = request.files['file']
     character_id = request.form.get('character_id')
 
@@ -45,18 +42,17 @@ def upload_sprite():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-
         # Формируем URL для клиента
         file_url = f'/static/sprites/{filename}'
-
-        roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
-
-
-        return jsonify({'success': True, 'message': 'Спрайт успешно загружен', 'url': file_url}), 200
+        sprite = roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
+        sprite["success"] = True
+        return jsonify(sprite), 200
     else:
         return jsonify({'success': False, 'message': 'Неподдерживаемый формат файла'}), 400
 
-
+@socketio.on("delete_sprite")
+def delete_sprite(data):
+    roomAdapter.delete_sprite(session.get('room_id'), data)
 # Route for the main page
 @app.route('/')
 def home():
@@ -119,6 +115,7 @@ def new_character():
     roomAdapter.addCharacter(room_id)
     characters_dict = roomAdapter.get_characters(room_id)
     emit('characters_update', characters_dict, room=room_id)
+
 
 
 @socketio.on('update_state')
