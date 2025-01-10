@@ -16,13 +16,16 @@ class RoomAdapter:
 
     def updateRoom(self, room_id, data):
         print(data)
+        new_character = 0
         if "new_sprite" in data:
+            if data["new_sprite"]["character_id"] not in self.rooms[room_id].current_sprites:
+                new_character = 1
             self.rooms[room_id].current_sprites[data["new_sprite"]["character_id"]] = \
                 {'sprite_url': data["new_sprite"]["sprite_url"],
                  "height": 400,
                  "character_id": data["new_sprite"]["character_id"],
                  "sprite_id": data["new_sprite"]["sprite_id"]}
-            return {'current_sprites': self.rooms[room_id].current_sprites}
+            return {'current_sprites': self.rooms[room_id].current_sprites, "new_character": new_character}
         if "current_background" in data:
             self.rooms[room_id].current_background = data["current_background"]
             return {'current_background': self.rooms[room_id].current_background}
@@ -31,7 +34,7 @@ class RoomAdapter:
         self.rooms[room_id].users.append(user_id)
 
     def get_current(self, room_id):
-        return
+        return {'current_sprites': self.rooms[room_id].current_sprites}
 
     def addCharacter(self, room_id):
         c_id = random.randint(0, 99999)
@@ -60,10 +63,14 @@ class RoomAdapter:
         return sprite
 
     def delete_sprite(self, room_id, data):
-        print(data)
-        print(self.get_room(room_id).characters[data["character_id"]].sprites)
+        print("data", data)
+        print("syb", self.get_room(room_id).characters[data["character_id"]].sprites)
+        print(self.get_room(room_id).current_sprites)
         self.get_room(room_id).characters[data["character_id"]].sprites.pop(data["sprite_id"])
-        if data["sprite_id"] in self.get_room(room_id).current_sprites:
-            self.get_room(room_id).current_sprites.pop(data["sprite_id"])
+        if data["character_id"] in self.get_room(room_id).current_sprites:
+            self.get_room(room_id).current_sprites.pop(data["character_id"])
         if len(self.get_room(room_id).characters[data["character_id"]].sprites) == 0:
             self.get_room(room_id).characters[data["character_id"]].picture = "static/sprites/new_character.png"
+
+    def remove_current(self, room_id, data):
+        self.get_room(room_id).current_sprites.pop(data["character_id"])

@@ -94,11 +94,6 @@
             align-items: center; /* Центрирование по вертикали */
         }
 
-        .sprite {
-            background-size: contain;
-            background-repeat: no-repeat;
-            margin: 0 5px; /* Промежуток между спрайтами */
-        }
 
         #block-3 {
             display: flex;
@@ -232,6 +227,22 @@
             cursor: pointer;
         }
 
+        .sprite {
+            opacity: 0;
+            transition: opacity 1.0s ease, transform 1.0s ease;
+            background-size: contain;
+            background-repeat: no-repeat;
+            margin: 0 5px; /* Промежуток между спрайтами */
+        }
+
+        .sprite.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .sprite.fade-out {
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
@@ -269,6 +280,7 @@
         const message = {name: name}; // Формируем объект сообщения
         socket.emit('new_character');
     }
+
     document.getElementById('add-character-button').addEventListener('click', onButtonClick);
 
     socket.on('state_updated', (data) => {
@@ -279,8 +291,6 @@
         if (data.current_sprites) {
             gameContainer.innerHTML = ''; // Очищаем контейнер
 
-            // Создаем спрайты
-
             const spritePromises = Object.values(data.current_sprites).map(sprite => {
                 return new Promise((resolve) => {
                     const spriteElement = document.createElement('div');
@@ -289,25 +299,49 @@
                     // Устанавливаем изображение и уменьшенные размеры
                     spriteElement.style.backgroundImage = `url(${sprite.sprite_url})`;
                     spriteElement.style.height = `${sprite.height / 2}px`;
-
-                    // Ждем загрузки изображения для вычисления ширины
                     const img = new Image();
                     img.src = sprite.sprite_url;
                     img.onload = () => {
                         const aspectRatio = img.width / img.height;
                         spriteElement.style.width = `${(sprite.height / 2) * aspectRatio}px`;
+
+                        // Добавляем обработчики событий
+                        spriteElement.addEventListener('click', () => {
+                            createModalEdit(sprite.character_id);
+                        });
+                        spriteElement.addEventListener('contextmenu', (event) => {
+                            event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
+                            spriteElement.classList.add('fade-out');
+                            spriteElement.addEventListener('transitionend', () => {
+                                if (gameContainer.contains(spriteElement)) {
+                                    console.log('Элемент плавно удален');
+                                }
+                            }, {once: true}); // Обработчик срабатывает только один раз
+                            socket.emit('delete_current', {
+                                "character_id": sprite.character_id
+                            });
+                        });
                         resolve(spriteElement); // Возвращаем созданный спрайт
                     };
-                    spriteElement.addEventListener('click', () => {
-                        createModalEdit(sprite.character_id)
-                    })
                 });
             });
-
-            // Добавляем спрайты в контейнер после загрузки всех изображений
-            Promise.all(spritePromises).then(sprites => {
-                sprites.forEach(sprite => gameContainer.appendChild(sprite));
-            });
+            if (data.new_character) {
+                Promise.all(spritePromises).then(sprites => {
+                    sprites.forEach(sprite => {
+                        gameContainer.appendChild(sprite);
+                        requestAnimationFrame(() => {
+                            sprite.classList.add('show');
+                        });
+                    });
+                });
+            } else {
+                Promise.all(spritePromises).then(sprites => {
+                    sprites.forEach(sprite => {
+                        gameContainer.appendChild(sprite)
+                        sprite.classList.add('show');
+                    });
+                });
+            }
         }
     });
 

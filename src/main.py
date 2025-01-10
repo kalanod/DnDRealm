@@ -22,6 +22,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 # Убедимся, что папка существует
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 def allowed_file(filename):
     """Проверка, разрешено ли расширение файла"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -42,17 +43,25 @@ def upload_sprite():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        # Формируем URL для клиента
         file_url = f'/static/sprites/{filename}'
         sprite = roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
         sprite["success"] = True
+        characters_dict = roomAdapter.get_characters(session.get("room_id"))
+        socketio.emit('characters_update', characters_dict, room=session.get("room_id"))
         return jsonify(sprite), 200
     else:
         return jsonify({'success': False, 'message': 'Неподдерживаемый формат файла'}), 400
 
+
 @socketio.on("delete_sprite")
 def delete_sprite(data):
-    roomAdapter.delete_sprite(session.get('room_id'), data)
+    room_id = session.get('room_id')
+    roomAdapter.delete_sprite(room_id, data)
+    emit('state_updated', roomAdapter.get_current(room_id), room=room_id)
+    characters_dict = roomAdapter.get_characters(room_id)
+    emit('characters_update', characters_dict, room=room_id)
+
+
 # Route for the main page
 @app.route('/')
 def home():
@@ -83,9 +92,7 @@ def login():
         if authHandler.auth(AuthData(username, password)):
             return redirect('/profile')  # Перенаправление на страницу приветствия
         else:
-            error = 'Неверные данные. Попробуйте снова.'  # Устанавливаем ошибку
-
-    # Если запрос GET или ошибка в POST, отображаем форму
+            error = 'Неверные данные. Попробуйте снова.'
     return render_template('login.html', error=error)
 
 
@@ -114,16 +121,13 @@ def new_character():
     room_id = session.get('room_id')
     roomAdapter.addCharacter(room_id)
     characters_dict = roomAdapter.get_characters(room_id)
-    print(characters_dict)
     emit('characters_update', characters_dict, room=room_id)
-
 
 
 @socketio.on('update_state')
 def update_state(data):
     room_id = session.get("room_id")
     data = roomAdapter.updateRoom(room_id, data)
-    print(data)
     emit('state_updated', data, room=room_id)
 
 
@@ -166,17 +170,24 @@ def handle_leave():
     leave_room(session.get('room_id'))
 
 
+@socketio.on("delete_current")
+def delete_current(data):
+    room_id = session.get('room_id')
+    roomAdapter.remove_current(room_id, data)
+
 @socketio.on("character_delete")
 def character_delete(data):
     room_id = session.get('room_id')
     roomAdapter.delete_character(room_id, data['characterId'])
     emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
 
+
 @socketio.on("character_update")
 def character_update(data):
     room_id = session.get('room_id')
     roomAdapter.updateCharacter(room_id, data['characterId'], data['name'])
     emit('characters_update', roomAdapter.get_characters(room_id), room=room_id)
+
 
 @app.route('/leave_room', methods=['POST'])
 def leave_room():
