@@ -114,6 +114,7 @@ def new_character():
     room_id = session.get('room_id')
     roomAdapter.addCharacter(room_id)
     characters_dict = roomAdapter.get_characters(room_id)
+    print(characters_dict)
     emit('characters_update', characters_dict, room=room_id)
 
 
@@ -154,6 +155,7 @@ def handle_connect():
         emit('state_updated', {"current_background": roomAdapter.get_room(room_id).current_background}, room=room_id)
         emit('state_updated', {"current_sprites": roomAdapter.get_room(room_id).current_sprites}, room=room_id)
         characters_dict = roomAdapter.get_characters(room_id)
+        print(characters_dict)
         emit('characters_update', characters_dict, room=room_id)
     else:
         emit('error', {'status': 'failure', 'message': 'No room assigned'})

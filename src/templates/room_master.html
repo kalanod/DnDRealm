@@ -263,13 +263,14 @@
 <script>
     const socket = io();
     const gameContainer = document.getElementById('game-container');
+    var characters;
 
     function onButtonClick() {
         const message = {name: name}; // Формируем объект сообщения
         socket.emit('new_character');
     }
-
     document.getElementById('add-character-button').addEventListener('click', onButtonClick);
+
     socket.on('state_updated', (data) => {
         if (data.current_background) {
             gameContainer.style.backgroundImage = `url(${data.current_background})`;
@@ -298,7 +299,7 @@
                         resolve(spriteElement); // Возвращаем созданный спрайт
                     };
                     spriteElement.addEventListener('click', () => {
-
+                        createModalEdit(sprite.character_id)
                     })
                 });
             });
@@ -309,38 +310,80 @@
             });
         }
     });
+
     const charactersList = document.getElementById('characters-list');
 
-    // Обновление списка персонажей
     socket.on('characters_update', (data) => {
         charactersList.innerHTML = ''; // Очищаем список
-
-        data.forEach(character => {
+        characters = data
+        Object.values(data).forEach(character => {
             const characterItem = document.createElement('div');
             characterItem.className = 'character-item';
 
-            // Добавляем круглое изображение
             const characterImage = document.createElement('div');
             characterImage.className = 'character-image';
             characterImage.style.backgroundImage = `url(${character.picture})`;
 
-            // Добавляем имя
             const characterName = document.createElement('div');
             characterName.className = 'character-name';
             characterName.textContent = character.name;
 
             characterItem.addEventListener('click', () => {
                 console.log(character)
-                createModal(character); // Передаем объект character в функцию
-                // Логика обработки клика
+                createModal(character);
             });
 
-            // Собираем элемент
             characterItem.appendChild(characterImage);
             characterItem.appendChild(characterName);
             charactersList.appendChild(characterItem);
         });
     });
+
+
+    function createModalEdit(sprite) {
+        const character = characters[sprite]
+        console.log(characters)
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+
+        const spritesContainer = document.createElement('div');
+        spritesContainer.className = 'sprites-container';
+
+        function renderSprites_edit() {
+            spritesContainer.innerHTML = ''; // Очищаем контейнер
+            Object.values(character.sprites).forEach(sprite => {
+                const spriteCard = document.createElement('div');
+                spriteCard.className = 'sprite-card';
+                spriteCard.style.backgroundImage = `url(${sprite.sprite_url})`;
+                spriteCard.addEventListener('click', () => {
+                    socket.emit('update_state', {
+                        "new_sprite": {
+                            "sprite_url": sprite.sprite_url,
+                            "character_id": sprite.character_id,
+                            "sprite_id": sprite.sprite_id
+                        }
+                    });
+                })
+                spritesContainer.appendChild(spriteCard);
+            });
+        }
+
+        renderSprites_edit();
+        modalContent.appendChild(spritesContainer);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+
+        // Закрытие окна при клике вне модального содержимого
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    }
+
 
     function createModal(character) {
         // Создаем модальное окно
@@ -385,9 +428,9 @@
                 spriteCard.addEventListener('contextmenu', (event) => {
                     event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
                     socket.emit('delete_sprite', {
-                            "sprite_url": sprite.sprite_url,
-                            "character_id": sprite.character_id,
-                            "sprite_id": sprite.sprite_id
+                        "sprite_url": sprite.sprite_url,
+                        "character_id": sprite.character_id,
+                        "sprite_id": sprite.sprite_id
 
                     });
                     spritesContainer.removeChild(spriteCard);
