@@ -157,9 +157,8 @@ def handle_connect():
         join_room(room_id)
         emit('joined_room', {'status': 'success', 'room_id': room_id})
         emit('state_updated', {"current_background": roomAdapter.get_room(room_id).current_background}, room=room_id)
-        emit('state_updated', {"current_sprites": roomAdapter.get_room(room_id).current_sprites}, room=room_id)
+        emit('state_updated', roomAdapter.get_current(room_id), room=room_id)
         characters_dict = roomAdapter.get_characters(room_id)
-        print(characters_dict)
         emit('characters_update', characters_dict, room=room_id)
     else:
         emit('error', {'status': 'failure', 'message': 'No room assigned'})
@@ -174,6 +173,7 @@ def handle_leave():
 def delete_current(data):
     room_id = session.get('room_id')
     roomAdapter.remove_current(room_id, data)
+    emit('delete_current_ans', data, room=room_id)
 
 @socketio.on("character_delete")
 def character_delete(data):

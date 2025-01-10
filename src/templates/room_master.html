@@ -283,11 +283,20 @@
 
     document.getElementById('add-character-button').addEventListener('click', onButtonClick);
 
+
     socket.on('state_updated', (data) => {
         if (data.current_background) {
             gameContainer.style.backgroundImage = `url(${data.current_background})`;
         }
+        const centerSprites = () => {
+            const totalWidth = Array.from(gameContainer.children)
+                .reduce((sum, sprite) => sum + sprite.offsetWidth, 0);
 
+            const containerWidth = gameContainer.width;
+            const offset = Math.max(0, (containerWidth - totalWidth) / 2);
+
+            gameContainer.style.paddingLeft = `${offset}px`;
+        };
         if (data.current_sprites) {
             gameContainer.innerHTML = ''; // Очищаем контейнер
 
@@ -311,16 +320,22 @@
                         });
                         spriteElement.addEventListener('contextmenu', (event) => {
                             event.preventDefault(); // Предотвращаем стандартное контекстное меню браузера
-                            spriteElement.classList.add('fade-out');
-                            spriteElement.addEventListener('transitionend', () => {
-                                if (gameContainer.contains(spriteElement)) {
-                                    console.log('Элемент плавно удален');
-                                }
-                            }, {once: true}); // Обработчик срабатывает только один раз
                             socket.emit('delete_current', {
                                 "character_id": sprite.character_id
                             });
+
                         });
+                        socket.on("delete_current_ans", (data) => {
+                            if (sprite.character_id === data.character_id) {
+                                spriteElement.classList.add('fade-out');
+                                spriteElement.addEventListener('transitionend', () => {
+                                    gameContainer.removeChild(spriteElement)
+                                    centerSprites();
+                                }, {once: true}); // Обработчик срабатывает только один раз
+
+                            }
+                        });
+
                         resolve(spriteElement); // Возвращаем созданный спрайт
                     };
                 });
