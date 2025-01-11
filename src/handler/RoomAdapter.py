@@ -5,6 +5,7 @@ from src.handler.DatabaseHandler import DatabaseHandler
 from src.model.Character import Character
 from src.model.Room import Room
 
+
 class RoomAdapter:
     def __init__(self, db_path="example.db"):
         self.db_path = db_path
@@ -113,7 +114,7 @@ class RoomAdapter:
         character = room.characters[character_id]
         character.name = character_name
         db_handler = self.get_db_handler()
-        db_handler.save_character(room_id, character)
+        db_handler.save_character(room_id, character, 0)
 
     def addSprite(self, room_id, character_id, file_url):
         room = self.get_room(room_id)
@@ -134,6 +135,8 @@ class RoomAdapter:
             db_handler = self.get_db_handler()
             db_handler.save_character(room_id, character, d=0)
         db_handler = self.get_db_handler()
+        print("new sprite")
+        print(sprite)
         db_handler.save_sprite(character_id, sprite)
         return sprite
 

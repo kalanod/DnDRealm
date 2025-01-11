@@ -1,7 +1,7 @@
 
-from src.handler.DBAdapter import DBAdapter
-from src.handler.RoomAdapter import RoomAdapter
-from src.model.User import User
+from handler.DBAdapter import DBAdapter
+from handler.RoomAdapter import RoomAdapter
+from model.User import User
 
 
 class UserAdapter:

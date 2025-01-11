@@ -1,5 +1,5 @@
-from src.handler.DBAdapter import DBAdapter
-from src.model import AuthData, RegData
+from handler.DBAdapter import DBAdapter
+from model import AuthData, RegData
 
 
 class AuthHandler:

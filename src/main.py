@@ -4,16 +4,16 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.utils import secure_filename
 
-from src.handler.AuthHandler import AuthHandler
-from src.handler.RoomAdapter import RoomAdapter
-from src.handler.UserAdapter import UserAdapter
-from src.model.AuthData import AuthData
+from handler.AuthHandler import AuthHandler
+from handler.RoomAdapter import RoomAdapter
+from handler.UserAdapter import UserAdapter
+from model.AuthData import AuthData
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'yoasfaecret_k33here'
 socketio = SocketIO(app)
 
-UPLOAD_FOLDER = 'src/static/sprites/'
+UPLOAD_FOLDER = 'static/sprites/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Разрешенные расширения файлов
@@ -24,7 +24,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def allowed_file(filename):
-    """Проверка, разрешено ли расширение файла"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -39,11 +38,10 @@ def upload_sprite():
         return jsonify({'success': False, 'message': 'Не указан ID персонажа'}), 400
 
     if file and allowed_file(file.filename):
-        # Сохраняем файл с безопасным именем
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        file_url = f'/static/sprites/{filename}'
+        file_url = f'static/sprites/{filename}'
         sprite = roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
         sprite["success"] = True
         characters_dict = roomAdapter.get_characters(session.get("room_id"))
@@ -239,4 +237,4 @@ if __name__ == '__main__':
     userAdapter = UserAdapter()
     authHandler = AuthHandler(session=session)
     roomAdapter = RoomAdapter()
-    app.run(host="0.0.0.0", port=8090, debug=False)
+    app.run(host="0.0.0.0", port=80)

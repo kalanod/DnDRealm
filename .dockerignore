@@ -1,0 +1,7 @@
+.idea
+__pycache__
+*.pyc
+*.pyo
+tmp
+venv
+example.db

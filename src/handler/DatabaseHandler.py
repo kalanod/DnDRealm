@@ -1,5 +1,6 @@
 import json
 import sqlite3
+
 from src.model.Character import Character
 from src.model.Room import Room
 
