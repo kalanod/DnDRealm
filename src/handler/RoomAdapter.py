@@ -1,9 +1,9 @@
 import random
 from random import Random
 
-from src.handler.DatabaseHandler import DatabaseHandler
-from src.model.Character import Character
-from src.model.Room import Room
+from handler.DatabaseHandler import DatabaseHandler
+from model.Character import Character
+from model.Room import Room
 
 
 class RoomAdapter:

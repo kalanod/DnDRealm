@@ -8,7 +8,7 @@ WORKDIR /app
 COPY src/ /app
 
 # Устанавливаем зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Указываем команду для запуска приложения
 CMD ["python", "main.py"]
