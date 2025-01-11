@@ -1,6 +1,8 @@
 class Room:
 
     def __init__(self, name, room_id, master_id, current_background=None, current_sprites=None, users=None):
+        if current_background is None:
+            current_background = dict()
         if users is None:
             users = []
         if current_sprites is None:

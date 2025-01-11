@@ -51,7 +51,6 @@
                 };
                 if (data.current_sprites) {
                     gameContainer.innerHTML = ''; // Очищаем контейнер
-
                     const spritePromises = Object.values(data.current_sprites).map(sprite => {
                         return new Promise((resolve) => {
                             const spriteElement = document.createElement('div');

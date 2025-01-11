@@ -47,6 +47,7 @@ def upload_sprite():
         sprite = roomAdapter.addSprite(session.get("room_id"), character_id, file_url)
         sprite["success"] = True
         characters_dict = roomAdapter.get_characters(session.get("room_id"))
+        socketio.emit('backgrounds_update', roomAdapter.get_backgrounds(session.get("room_id")), room=session.get("room_id"))
         socketio.emit('characters_update', characters_dict, room=session.get("room_id"))
         return jsonify(sprite), 200
     else:
@@ -130,7 +131,7 @@ def new_background():
 
 @socketio.on('update_state')
 def update_state(data):
-    print(data)
+    print("data outside", data)
     room_id = session.get("room_id")
     data = roomAdapter.updateRoom(room_id, data)
     emit('state_updated', data, room=room_id)
@@ -238,4 +239,4 @@ if __name__ == '__main__':
     userAdapter = UserAdapter()
     authHandler = AuthHandler(session=session)
     roomAdapter = RoomAdapter()
-    app.run(host="0.0.0.0", port=80, debug=False)
+    app.run(host="0.0.0.0", port=8090, debug=False)

@@ -4,41 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Viewer</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            justify-content: center; /* Центрирование по горизонтали */
-            align-items: center; /* Центрирование по вертикали */
-        }
-
-        .sprite {
-            opacity: 0;
-            transition: opacity 1.0s ease, transform 1.0s ease;
-            background-size: contain;
-            background-repeat: no-repeat;
-            margin: 0 5px; /* Промежуток между спрайтами */
-        }
-
-        .sprite.show {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .sprite.fade-out {
-            opacity: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="static/css/room_master.css"/>
 </head>
 <body>
 <div id="game-container"></div>
@@ -86,7 +52,6 @@
                                             gameContainer.removeChild(spriteElement)
                                             centerSprites();
                                         }, {once: true}); // Обработчик срабатывает только один раз
-
                                     }
                                 });
                                 resolve(spriteElement); // Возвращаем созданный спрайт

@@ -1,89 +1,157 @@
 import random
 from random import Random
+
+from src.handler.DatabaseHandler import DatabaseHandler
 from src.model.Character import Character
 from src.model.Room import Room
 
-
 class RoomAdapter:
-    def __init__(self):
-        self.rooms = {1: Room("name", 1, 1)}
+    def __init__(self, db_path="example.db"):
+        self.db_path = db_path
+        self.rooms = {}
+        self.ensure_default_room()
+
+    def ensure_default_room(self):
+        db_handler = self.get_db_handler()
+        room = db_handler.get_room(1)
+        if not room:
+            room = Room(name="Default Room", room_id=1, master_id="1", current_background=None)
+            db_handler.save_room(room)
+            self.rooms[1] = room
+
+    def get_db_handler(self):
+        return DatabaseHandler(self.db_path)
 
     def get_room(self, room_id) -> Room:
-        return self.rooms[room_id]
+        if room_id not in self.rooms:
+            db_handler = self.get_db_handler()
+            room = db_handler.get_room(room_id)
+            if room:
+                room.characters = db_handler.get_characters(room_id)
+                for char_id, char in room.characters.items():
+                    char.sprites = db_handler.get_sprites(char_id)
+                self.rooms[room_id] = room
+        print(self.rooms.get(room_id))
+
+        return self.rooms.get(room_id)
 
     def get_roomId_by_code(self, room_code):
-        return 1
+        return 1  # Placeholder for actual implementation
 
     def updateRoom(self, room_id, data):
+        room = self.get_room(room_id)
         new_character = 0
+        db_handler = self.get_db_handler()
+        print("update_room")
+        print("data=", data)
         if "new_sprite" in data:
-            if data["new_sprite"]["character_id"] not in self.rooms[room_id].current_sprites:
+            character_id = data["new_sprite"]["character_id"]
+            if character_id not in room.current_sprites:
                 new_character = 1
-            self.rooms[room_id].current_sprites[data["new_sprite"]["character_id"]] = \
-                {'sprite_url': data["new_sprite"]["sprite_url"],
-                 "height": 400,
-                 "character_id": data["new_sprite"]["character_id"],
-                 "sprite_id": data["new_sprite"]["sprite_id"]}
-            return {'current_sprites': self.rooms[room_id].current_sprites, "new_character": new_character}
+            sprite = {
+                'sprite_url': data["new_sprite"]["sprite_url"],
+                "height": 400,
+                "character_id": character_id,
+                "sprite_id": data["new_sprite"]["sprite_id"]
+            }
+            room.current_sprites[character_id] = sprite
+            db_handler.save_sprite(character_id, sprite)
+            db_handler.save_room(room)
+            return {'current_sprites': room.current_sprites, "new_character": new_character}
         if "current_background" in data:
-            self.rooms[room_id].current_background = data["current_background"]
-            return {'current_background': self.rooms[room_id].current_background}
+            room.current_background = data["current_background"]
+            db_handler.save_room(room)
+            return {'current_background': room.current_background}
 
     def addUser(self, room_id, user_id):
-        self.rooms[room_id].users.append(user_id)
+        room = self.get_room(room_id)
+        if user_id not in room.users:
+            room.users.append(user_id)
+            db_handler = self.get_db_handler()
+            db_handler.add_user_to_room(room_id, user_id)
 
     def get_current(self, room_id):
-        return {'current_sprites': self.rooms[room_id].current_sprites}
+        room = self.get_room(room_id)
+        return {'current_sprites': room.current_sprites}
 
     def addCharacter(self, room_id):
+        room = self.get_room(room_id)
         c_id = random.randint(0, 99999)
-        while c_id in self.rooms[room_id].characters:
+        while str(c_id) in room.characters:
             c_id = random.randint(0, 99999)
-        self.rooms[room_id].characters[str(c_id)] = Character(str(c_id), "New", False)
+        character = Character(str(c_id), "New", False)
+        room.characters[str(c_id)] = character
+        db_handler = self.get_db_handler()
+        db_handler.save_character(room_id, character)
 
     def addBackground(self, room_id):
+        room = self.get_room(room_id)
         c_id = random.randint(0, 99999)
-        while c_id in self.rooms[room_id].characters:
+        while str(c_id) in room.characters:
             c_id = random.randint(0, 99999)
-        self.rooms[room_id].characters[str(c_id)] = Character(str(c_id), "New", True)
+        character = Character(str(c_id), "New", True)
+        room.characters[str(c_id)] = character
+        db_handler = self.get_db_handler()
+        db_handler.save_character(room_id, character)
 
     def delete_character(self, room_id, character_id):
-        self.rooms[room_id].characters.pop(str(character_id))
+        room = self.get_room(room_id)
+        room.characters.pop(str(character_id), None)
+        db_handler = self.get_db_handler()
+        db_handler.delete_character(character_id)
 
     def get_characters(self, room_id):
-        characters = self.get_room(room_id).characters
-        return {character_id: characters[character_id].to_dict() for character_id in characters if
-                not characters[character_id].is_background}
+        room = self.get_room(room_id)
+        return {character_id: character.to_dict() for character_id, character in room.characters.items() if not character.is_background}
 
     def get_backgrounds(self, room_id):
-        characters = self.get_room(room_id).characters
-        return {character_id: characters[character_id].to_dict() for character_id in characters if
-                characters[character_id].is_background}
+        room = self.get_room(room_id)
+        return {character_id: character.to_dict() for character_id, character in room.characters.items() if character.is_background}
 
     def updateCharacter(self, room_id, character_id, character_name):
-        self.get_room(room_id).characters[character_id].name = character_name
+        room = self.get_room(room_id)
+        character = room.characters[character_id]
+        character.name = character_name
+        db_handler = self.get_db_handler()
+        db_handler.save_character(room_id, character)
 
     def addSprite(self, room_id, character_id, file_url):
-        if len(self.get_room(room_id).characters[character_id].sprites) == 0:
-            self.get_room(room_id).characters[character_id].picture = file_url
+        room = self.get_room(room_id)
+        character = room.characters[character_id]
+        if len(character.sprites) == 0:
+            character.picture = file_url
         sprite_id = random.randint(0, 99999)
-        while sprite_id in self.get_room(room_id).characters[character_id].sprites:
+        while sprite_id in character.sprites:
             sprite_id = random.randint(0, 99999)
-        sprite = {"sprite_url": file_url, "height": 400, "character_id": character_id,
-                  "sprite_id": str(room_id) + "|" + str(sprite_id)}
-        self.get_room(room_id).characters[character_id].sprites[str(room_id) + "|" + str(sprite_id)] = sprite
+        sprite = {
+            "sprite_url": file_url,
+            "height": 400,
+            "character_id": character_id,
+            "sprite_id": str(room_id) + "|" + str(sprite_id)
+        }
+        character.sprites[sprite["sprite_id"]] = sprite
+        if len(character.sprites) == 1:
+            db_handler = self.get_db_handler()
+            db_handler.save_character(room_id, character, d=0)
+        db_handler = self.get_db_handler()
+        db_handler.save_sprite(character_id, sprite)
         return sprite
 
     def delete_sprite(self, room_id, data):
-        self.get_room(room_id).characters[data["character_id"]].sprites.pop(data["sprite_id"])
-        if data["character_id"] in self.get_room(room_id).current_sprites:
-            self.get_room(room_id).current_sprites.pop(data["character_id"])
-        if len(self.get_room(room_id).characters[data["character_id"]].sprites) == 0:
-            self.get_room(room_id).characters[data["character_id"]].picture = "static/sprites/new_character.png"
+        room = self.get_room(room_id)
+        character = room.characters[data["character_id"]]
+        character.sprites.pop(data["sprite_id"], None)
+        if data["character_id"] in room.current_sprites:
+            room.current_sprites.pop(data["character_id"], None)
+        if len(character.sprites) == 0:
+            character.picture = "static/sprites/new_character.png"
+            db_handler = self.get_db_handler()
+            db_handler.save_character(room_id, character)
+        db_handler = self.get_db_handler()
+        db_handler.save_character(room_id, character)
 
     def remove_current(self, room_id, data):
-        self.get_room(room_id).current_sprites.pop(data["character_id"])
-
-
-
-
+        room = self.get_room(room_id)
+        room.current_sprites.pop(data["character_id"], None)
+        db_handler = self.get_db_handler()
+        db_handler.save_room(room)
