@@ -8,16 +8,29 @@
 </head>
 <body>
 <div id="game-container"></div>
+<div id="curtain" style="position: absolute; background-color: black; width: 100%; height: 100%; z-index: 2"></div>
 <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 <script>
     const socket = io();
     const gameContainer = document.getElementById('game-container');
+    const curtain = document.getElementById('curtain');
     let characters;
     let backgrounds;
 
+    function changeBackground(newBackgroundUrl) {
+        console.log("AD")
+
+        curtain.classList.remove('fade-out1');
+        setTimeout(() => {
+            gameContainer.style.backgroundImage = newBackgroundUrl;
+            curtain.classList.add('fade-out1');
+        }, 1000);
+    }
+
+    curtain.classList.add('fade-out1');
     socket.on('state_updated', (data) => {
-         if (data.current_background) {
-                gameContainer.style.backgroundImage = `url(${data.current_background.sprite_url})`;
+            if (data.current_background) {
+                changeBackground(`url(${data.current_background.sprite_url})`);
             } else {
                 const centerSprites = () => {
                     const totalWidth = Array.from(gameContainer.children)

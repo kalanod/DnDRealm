@@ -36,9 +36,20 @@
     let characters;
     let backgrounds;
 
+    function changeBackground(newBackgroundUrl) {
+        console.log("AD")
+        gameContainer.classList.add('fade-out1');
+        setTimeout(() => {
+            gameContainer.style.backgroundImage = newBackgroundUrl;
+            gameContainer.classList.remove('fade-out1');
+        }, 1000);
+    }
+
+    // Пример вызова
+
     socket.on('state_updated', (data) => {
             if (data.current_background) {
-                gameContainer.style.backgroundImage = `url(${data.current_background.sprite_url})`;
+                changeBackground(`url(${data.current_background.sprite_url})`);
             } else {
                 const centerSprites = () => {
                     const totalWidth = Array.from(gameContainer.children)
