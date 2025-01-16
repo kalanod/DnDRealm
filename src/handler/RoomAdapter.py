@@ -51,7 +51,7 @@ class RoomAdapter:
                 new_character = 1
             sprite = {
                 'sprite_url': data["new_sprite"]["sprite_url"],
-                "height": 400,
+                "height": 600,
                 "character_id": character_id,
                 "sprite_id": data["new_sprite"]["sprite_id"]
             }
@@ -126,7 +126,7 @@ class RoomAdapter:
             sprite_id = random.randint(0, 99999)
         sprite = {
             "sprite_url": file_url,
-            "height": 400,
+            "height": 600,
             "character_id": character_id,
             "sprite_id": str(room_id) + "|" + str(sprite_id)
         }
